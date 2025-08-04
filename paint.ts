@@ -6,8 +6,12 @@ canvas.height = canvas.clientHeight;
 const ctx = canvas.getContext("2d");
 
 const fontSize = 24;
-const widthToHeightRatio = 0.62;
+const widthToHeightRatio = 0.6;
 
+
+// Track canvas offsets
+var canvasLeftOffset = canvas.getBoundingClientRect().left;
+var canvasTopOffset = canvas.getBoundingClientRect().top;
 
 
 class PaintTool {
@@ -42,9 +46,9 @@ class PaintTool {
     tryPaint = (event: MouseEvent) => {
         if (this.isDown) {
 
-            // Localise to the relevant grid cell
-            const xIdx = Math.round((event.clientX - canvas.clientLeft) / this.gridCellWidth);
-            const yIdx = Math.round((event.clientY - canvas.clientTop) / this.gridCellHeight);
+            // Localise to the relevant 'grid cell'
+            const xIdx = Math.round((event.clientX - canvasLeftOffset) / this.gridCellWidth);
+            const yIdx = Math.round((event.clientY - canvasTopOffset) / this.gridCellHeight);
 
             // Check if we need to increase the length of the string to account for new character coord
             if (this.grid[yIdx].length <= xIdx) {
@@ -55,8 +59,13 @@ class PaintTool {
             // 'Paint' specified cell
             this.grid[yIdx] = this.grid[yIdx].slice(0, xIdx) + this.brush + this.grid[yIdx].slice(xIdx + 1, this.grid[yIdx].length);
 
-            renderGrid(this.grid);
+            renderGrid(this.grid, "white");
         }
+    }
+
+    setBrush = () => {
+        //TODO
+        //this.brush = ....
     }
 };
 
@@ -72,16 +81,13 @@ function initGrid(): Array<string> {
 
 
 
-function renderGrid(grid: Array<string>): void {
-
-    console.log(grid);
-
+function renderGrid(grid: Array<string>, colour: string): void {
 
     for (let i=0; i<grid.length; i++) {
 
         if (ctx) {
             ctx.font = `${fontSize}px monospace`;
-            ctx.fillStyle = "white";
+            ctx.fillStyle = colour;
             ctx.fillText(grid[i], 0, fontSize*(i+1));
         }
     }

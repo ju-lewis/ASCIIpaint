@@ -1,10 +1,17 @@
 
+html {
+    background-color: #3A3B3C;
+}
+
 #canvas {
     width: 800px;
     height: 800px;
 
     background-color: #18191A;
-};
+}
 
-
+.tool-container {
+    width: fit-content;
+    margin: auto;
+}
 
