@@ -63,6 +63,9 @@ class PaintTool {
 
             // Handle painting a single 'dot' without needing to move mouse
             this.tryPaint(event);
+
+            // Clear the "currently undone" stack (since we're overwriting)
+            this.currentlyUndone = new Array();
         });
         canvas.addEventListener("mouseup", () => {this.isDown = false});
     }
@@ -89,7 +92,7 @@ class PaintTool {
 
     snapshotGrid = (_event: MouseEvent) => {
         // This gets called after the mouse click is released when painting
-        this.gridHistory.push(this.grid);
+        this.gridHistory.push(structuredClone(this.grid));
     }
 
     setBrush = () => {
@@ -97,21 +100,40 @@ class PaintTool {
         //this.brush = ....
     }
 
-
     undo = () => {
         const undoneStroke = this.gridHistory.pop();
     
         // Store the undone change
         if (undoneStroke) {
             this.currentlyUndone.push(undoneStroke);
-        }
 
-        renderGrid(this.grid, this.color);
+            // Update grid (if there's a valid state to return to)
+            if (this.gridHistory.length > 0) {
+                this.grid = this.gridHistory[this.gridHistory.length - 1];
+            } else {
+                this.grid = initGrid();
+            }
+
+            // Re-render canvas
+            ctx?.clearRect(0,0,canvas.width,canvas.height);
+            renderGrid(this.grid, this.color);
+        }
     }
     
-    
     redo = () => {
-    
+        const redoneStroke = this.currentlyUndone.pop();
+
+        if (redoneStroke) {
+            // Move it back onto the history stack
+            this.gridHistory.push(redoneStroke);
+
+            // Update grid
+            this.grid = redoneStroke;
+
+            // Re-render canvas
+            ctx?.clearRect(0,0,canvas.width,canvas.height);
+            renderGrid(this.grid, this.color);
+        }
     }
 
 };
@@ -140,12 +162,18 @@ function renderGrid(grid: Array<string>, color: string): void {
 }
 
 
-
-
-
 // Initialisation code
 let grid = initGrid();
 const tool = new PaintTool(grid);
 
+
+// Cleanly accessible by buttons in markup
+function undoTrigger() {
+    tool.undo();
+}
+
+function redoTrigger() {
+    tool.redo();
+}
 
 

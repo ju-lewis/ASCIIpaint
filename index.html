@@ -8,11 +8,13 @@
     </head>
     <body>
         <div class="tool-container">
-            <div>
+            <div style="display: flex;">
                 <canvas id="canvas" width="800" height="800"></canvas>
 
                 <!-- Toolbar -->
                 <div>
+                    <button onclick="undoTrigger()">Undo</button>
+                    <button onclick="redoTrigger()">Redo</button>
                 </div>
             </div>
         </div>
