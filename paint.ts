@@ -1,4 +1,5 @@
 
+/*================================= GLOBALS ==================================*/
 const canvas: HTMLCanvasElement = document.getElementById("canvas") as HTMLCanvasElement;
 canvas.width = canvas.clientWidth;
 canvas.height = canvas.clientHeight;
@@ -8,10 +9,18 @@ const ctx = canvas.getContext("2d");
 const fontSize = 24;
 const widthToHeightRatio = 0.6;
 
-
 // Track canvas offsets
 var canvasLeftOffset = canvas.getBoundingClientRect().left;
 var canvasTopOffset = canvas.getBoundingClientRect().top;
+document.addEventListener("resize", () => {
+    canvasLeftOffset = canvas.getBoundingClientRect().left;
+    canvasTopOffset = canvas.getBoundingClientRect().top;
+}); 
+
+
+
+/*============================== END OF GLOBALS ==============================*/
+
 
 
 class PaintTool {
@@ -20,10 +29,17 @@ class PaintTool {
     x: number;
     y: number;
     brush: string;
+    color: string;
 
     grid: Array<string>;
     gridCellWidth: number;
     gridCellHeight: number;
+
+    // Define an undo/redo stack
+    // Very naive implementation: store a 'snapshot' of the canvas after each brushstroke
+    gridHistory: Array<Array<string>> = new Array();
+    currentlyUndone: Array<Array<string>> = new Array();
+
 
     constructor(grid: Array<string>) {
 
@@ -31,6 +47,7 @@ class PaintTool {
         this.x = 0;
         this.y = 0;
         this.brush = "#";
+        this.color = "white";
 
         this.grid = grid;
 
@@ -39,7 +56,14 @@ class PaintTool {
 
         // Register mouse move event
         canvas.addEventListener("mousemove", this.tryPaint);
-        canvas.addEventListener("mousedown", () => {this.isDown = true});
+        canvas.addEventListener("click", this.snapshotGrid);
+
+        canvas.addEventListener("mousedown", (event: MouseEvent) => {
+            this.isDown = true
+
+            // Handle painting a single 'dot' without needing to move mouse
+            this.tryPaint(event);
+        });
         canvas.addEventListener("mouseup", () => {this.isDown = false});
     }
 
@@ -63,10 +87,33 @@ class PaintTool {
         }
     }
 
+    snapshotGrid = (_event: MouseEvent) => {
+        // This gets called after the mouse click is released when painting
+        this.gridHistory.push(this.grid);
+    }
+
     setBrush = () => {
         //TODO
         //this.brush = ....
     }
+
+
+    undo = () => {
+        const undoneStroke = this.gridHistory.pop();
+    
+        // Store the undone change
+        if (undoneStroke) {
+            this.currentlyUndone.push(undoneStroke);
+        }
+
+        renderGrid(this.grid, this.color);
+    }
+    
+    
+    redo = () => {
+    
+    }
+
 };
 
 
@@ -74,32 +121,31 @@ function initGrid(): Array<string> {
 
     // Compute height
     const numRows = Math.round(canvas.clientHeight / fontSize);
-    let grid = new Array(numRows);
-    
-    return grid.fill("");
+    let grid = new Array(numRows).fill("");
+
+    return grid;
 }
 
-
-
-function renderGrid(grid: Array<string>, colour: string): void {
-
+/** 
+ * Draws the ASCII art grid to the screen
+ */
+function renderGrid(grid: Array<string>, color: string): void {
     for (let i=0; i<grid.length; i++) {
-
         if (ctx) {
             ctx.font = `${fontSize}px monospace`;
-            ctx.fillStyle = colour;
+            ctx.fillStyle = color;
             ctx.fillText(grid[i], 0, fontSize*(i+1));
         }
     }
-
 }
+
+
+
 
 
 // Initialisation code
 let grid = initGrid();
-new PaintTool(grid);
-
-
+const tool = new PaintTool(grid);
 
 
 
